@@ -807,6 +807,11 @@ p.footer-text a{color:#d7d8d8}
 <li><a href="#_launch_the_quick_start">Launch the Quick Start</a></li>
 </ul>
 </li>
+<li><a href="#_post_deployment_steps">Post-deployment steps</a>
+<ul class="sectlevel2">
+<li><a href="#_run_windows_updates">Run Windows Updates</a></li>
+</ul>
+</li>
 <li><a href="#_test_the_deployment">Test the deployment</a></li>
 <li><a href="#_troubleshooting">Troubleshooting</a></li>
 <li><a href="#_faq">FAQ</a></li>
@@ -1312,6 +1317,36 @@ If you’re deploying SQL Server FCI into an existing VPC, make sure that your V
 <a class="image" href="images/cfn_outputs.png"><img src="images/cfn_outputs.png" alt="cfn_outputs" width="100%" height="100%"></a>
 </div>
 <div class="title">Figure 2. SQL Server FCI outputs after successful deployment</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_post_deployment_steps">Post-deployment steps</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_run_windows_updates">Run Windows Updates</h3>
+<div class="paragraph">
+<p>In order to ensure the deployed servers' operating systems and installed applications have the latest Microsoft updates, run Windows Update on each server.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Create an RDP session from the Remote Desktop Gateway server to each deployed server.</p>
+</li>
+<li>
+<p>Open the <strong>Settings</strong> application.</p>
+</li>
+<li>
+<p>Open <strong>Update &amp; Security</strong>.</p>
+</li>
+<li>
+<p>Click <strong>Check for updates</strong>.</p>
+</li>
+<li>
+<p>Install any updates and reboot if necessary.</p>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -2438,10 +2473,10 @@ and to share your customizations with others.</p>
 </html>
 <!--
 repo commit:
-2d05752cf58842c276a2fe4542cd8ffa9e99b965
+d04e581563a91557497a3c453208b75febfbac6f
 
 submodule config:
-+043db710e71444c3b66cdcc02d8b2b7c1aed26e0 docs/boilerplate (heads/main)
++59b9927c61cd1831141cf0350520c89abb2246da docs/boilerplate (heads/main)
  53fbedf058adaea101a587ec0fa9d84cb2a05587 submodules/quickstart-aws-vpc (v1.0-56-g53fbedf)
  ae836e04df35534723c9cef52eb91cb38bbfc391 submodules/quickstart-microsoft-activedirectory (remotes/origin/master-90-gae836e0)
  3d84d31563bfaed1cbb28486ba64ea5ca238aa29 submodules/quickstart-microsoft-rdgateway (remotes/origin/master-61-g3d84d31)
