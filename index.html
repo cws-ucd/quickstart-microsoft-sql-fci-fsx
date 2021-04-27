@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.12">
-<title>SQL Server with Failover Cluster Instances and FSX on the AWS Cloud</title>
+<title>SQL Server Failover Cluster Instance on the AWS Cloud</title>
 <style>
 
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -790,10 +790,15 @@ p.footer-text a{color:#d7d8d8}
 <div id="toctitle"></div>
 <ul class="sectlevel1">
 <li><a href="#_overview">Overview</a></li>
-<li><a href="#_sql_server_with_failover_cluster_instances_and_fsx_on_aws">SQL Server with Failover Cluster Instances and FSX on AWS</a></li>
+<li><a href="#_sql_server_failover_cluster_instance_on_aws">SQL Server Failover Cluster Instance on AWS</a></li>
 <li><a href="#_aws_costs">AWS costs</a></li>
 <li><a href="#_software_licenses">Software licenses</a></li>
-<li><a href="#_architecture">Architecture</a></li>
+<li><a href="#_architecture">Architecture</a>
+<ul class="sectlevel2">
+<li><a href="#_comparison_with_sql_server_with_always_on_replication">Comparison with SQL Server with Always On Replication</a></li>
+<li><a href="#_advantages_and_disadvantages">Advantages and disadvantages</a></li>
+</ul>
+</li>
 <li><a href="#_planning_the_deployment">Planning the deployment</a>
 <ul class="sectlevel2">
 <li><a href="#_specialized_knowledge">Specialized knowledge</a></li>
@@ -803,24 +808,24 @@ p.footer-text a{color:#d7d8d8}
 </li>
 <li><a href="#_deployment_steps">Deployment steps</a>
 <ul class="sectlevel2">
-<li><a href="#_sign_in_to_your_aws_account">Sign in to your AWS account</a></li>
+<li><a href="#_confirm_your_aws_account_configuration">Confirm your AWS account configuration</a></li>
 <li><a href="#_launch_the_quick_start">Launch the Quick Start</a></li>
 </ul>
 </li>
 <li><a href="#_post_deployment_steps">Post-deployment steps</a>
 <ul class="sectlevel2">
-<li><a href="#_run_windows_updates">Run Windows Updates</a></li>
+<li><a href="#_run_windows_updates">Run Windows updates</a></li>
 </ul>
 </li>
 <li><a href="#_test_the_deployment">Test the deployment</a></li>
 <li><a href="#_troubleshooting">Troubleshooting</a></li>
 <li><a href="#_faq">FAQ</a></li>
-<li><a href="#_additional_resources">Additional Resources</a></li>
+<li><a href="#_additional_resources">Additional resources</a></li>
 <li><a href="#_parameter_reference">Parameter reference</a>
 <ul class="sectlevel2">
-<li><a href="#_launch_into_a_new_vpc">Launch into a new VPC</a></li>
-<li><a href="#_launch_with_aws_managed_directory_service_into_an_existing_vpc">Launch with AWS managed directory service into an existing VPC</a></li>
-<li><a href="#_launch_with_self_managed_active_directory_into_an_existing_vpc">Launch with self-managed Active Directory into an existing VPC</a></li>
+<li><a href="#_parameters_for_deploying_into_a_new_vpc">Parameters for deploying into a new VPC</a></li>
+<li><a href="#_parameters_for_deploying_into_an_existing_vpc_with_aws_managed_microsoft_ad">Parameters for deploying into an existing VPC with AWS Managed Microsoft AD</a></li>
+<li><a href="#_parameters_for_deploying_into_an_existing_vpc_with_self_managed_active_directory">Parameters for deploying into an existing VPC with self-managed Active Directory</a></li>
 </ul>
 </li>
 <li><a href="#_send_us_feedback">Send us feedback</a></li>
@@ -833,7 +838,7 @@ p.footer-text a{color:#d7d8d8}
 <div id="content">
 <div id="preamble">
 <div class="sectionbody">
-<h2 id="_sql_server_with_failover_cluster_instances_and_fsx_on_the_aws_cloud" class="discrete text-center">SQL Server with Failover Cluster Instances and FSX on the AWS Cloud</h2>
+<h2 id="_sql_server_failover_cluster_instance_on_the_aws_cloud" class="discrete text-center">SQL Server Failover Cluster Instance on the AWS Cloud</h2>
 <h2 id="_quick_start_reference_deployment" class="discrete text-left text-center">Quick Start Reference Deployment</h2>
 <div class="imageblock text-center">
 <div class="content">
@@ -841,8 +846,9 @@ p.footer-text a{color:#d7d8d8}
 </div>
 </div>
 <div class="paragraph text-center">
-<p><strong>March 2021</strong><br>
-<em>Sepehr Samiei, Garry Singh and Dave May, AWS</em></p>
+<p><strong>April 2021</strong><br>
+<em>Sepehr Samiei and Garry Singh, AWS Microsoft Tech Specialist Solutions Architect team</em><br>
+<em>Dave May, AWS Quick Start team</em></p>
 </div>
 <div class="admonitionblock tip text-left">
 <table>
@@ -866,30 +872,51 @@ report bugs, or submit feature ideas for this Quick Start.
 <h2 id="_overview">Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This Quick Start deployment guide provides step-by-step instructions for deploying SQL Server on the AWS Cloud, using <a href="http://aws.amazon.com/cloudformation/">AWS CloudFormation</a> templates and <a href="https://docs.aws.amazon.com/systems-manager/latest/userguide/automation-documents.html">AWS Systems Manager Automation documents</a> that automate the deployment.</p>
+<p>This guide provides instructions for deploying the SQL Server Failover Cluster Instance Quick Start on the AWS Cloud.</p>
 </div>
 <div class="paragraph">
-<p>This Quick Start is for IT infrastructure architects, database administrators, and DevOps professionals who are planning to implement or extend Microsoft SQL Server using Windows Server Failover Clustering (WSFC) on AWS. SQL Server FCI requires shared storage that is accessible by all nodes within the cluster. This template uses a highly-available Multi-AZ Amazon FSx file system as the network share used to store MSSQL database files. Both the FSx file system and EC2 Windows instances that host SQL Server FCI nodes are joined to the same Active Directory domain.</p>
+<p>This Quick Start is for IT infrastructure architects, database administrators, and DevOps professionals who plan to implement or extend Microsoft SQL Server (MSSQL) using SQL Server on AWS with Windows Server Failover Clustering (WSFC). Unlike the Quick Start for <a href="https://aws.amazon.com/quickstart/architecture/sql/" target="_blank" rel="noopener">SQL Server with Always On Replication</a>, this one deploys an <a href="https://docs.microsoft.com/en-us/sql/sql-server/failover-clusters/windows/always-on-failover-cluster-instances-sql-server?view=sql-server-ver15" target="_blank" rel="noopener">Always On Failover Cluster Instance</a> (FCI). It also deploys <a href="https://aws.amazon.com/fsx/windows/" target="_blank" rel="noopener">Amazon FSx for Windows File Server</a> as a network share to store the database files.</p>
+</div>
+<div class="paragraph">
+<p>This guide does not provide general configuration and usage information for WSFC and MSSQL. For general guidance and best practices, consult the Microsoft product documentation and the <a href="https://d1.awsstatic.com/whitepapers/best-practices-for-deploying-microsoft-sql-server-on-aws.pdf" target="_blank" rel="noopener">Best Practices for Deploying Microsoft SQL Server on AWS</a> whitepaper.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_sql_server_with_failover_cluster_instances_and_fsx_on_aws">SQL Server with Failover Cluster Instances and FSX on AWS</h2>
+<h2 id="_sql_server_failover_cluster_instance_on_aws">SQL Server Failover Cluster Instance on AWS</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This Quick Start implements a highly available environment that includes Windows Server and SQL Server (MSSQL) running on Amazon Elastic Compute Cloud (EC2), using the <a href="https://docs.microsoft.com/en-us/sql/sql-server/failover-clusters/windows/always-on-failover-cluster-instances-sql-server?view=sql-server-ver15">MSSQL Always On Failover Cluster Instance (FCI) feature</a> and Amazon FSx as a network share for user database storage.</p>
+<p>The SQL Server FCI Quick Start deploys a highly available environment that includes Windows Server and SQL Server running on Amazon Elastic Compute Cloud (EC2). It requires shared storage that is accessible by all nodes within the WSFC cluster. It supports SQL Server 2019 running on Windows Server 2019.</p>
 </div>
 <div class="paragraph">
-<p>The automation in this deployment uses AWS Systems Manager Automation, AWS CloudFormation, and Windows PowerShell Desired State Configuration (DSC) to deploy a multi-node SQL Always On failover instance cluster. A prerequisite for deploying a MSSQL Always On FCI is Windows Server Failover Clustering (WSFC). MSSQL uses WSFC to increase application availability. WSFC provides infrastructure features that complement the high availability (HA) and disaster recovery (DR) scenarios supported in the AWS Cloud.</p>
+<p>This architecture uses a highly available Multi-AZ Amazon FSx file system as the network share used to store MSSQL database files. The Amazon FSx file system and EC2 Windows instances that host this architecture&#8217;s nodes are joined to the same Active Directory domain.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The "instance" in "failover cluster instance" means something different from the "instance" in "EC2 instance." In this Quick Start, a failover cluster instance, or FCI, has the appearance of an instance of SQL Server running on a single computer. A failover cluster instance provides failover from one EC2 instance (WSFC node) to another if the current EC2 instance goes down. For an illustration, see <a href="#architecture1">Figure 1</a>.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
-<p>FCI was introduced with SQL Server 2008 as a high availability feature and continues to be available in all newer versions of MSSQL. When used on premises, SQL Server FCI is often purely a high availability solution within a single data center. In AWS, it is possible to use SQL Server FCI as a solution that covers both HA and Disaster Recovery (DR) requirements.</p>
+<p>Traditionally, FCIs have been difficult to deploy and manage. With its Multi-AZ file system option, Amazon FSx provides fully managed file storage. This storage enables the high availability and durability that&#8217;s required to run business-critical Microsoft SQL Server database workloads without requiring licenses for each server. Amazon FSx automatically handles failover, simplifying shared storage to host your database deployments while reducing cost.</p>
 </div>
 <div class="paragraph">
-<p>Implementing SQL Server FCI requires shared storage, which is the reason FCI traditionally had to be deployed within a single data center. In AWS, the shared storage can span across multiple Availability Zones, enabling FCI clusters to span across multiple Availability Zones.</p>
+<p>The automation in this deployment uses AWS Systems Manager Automation, AWS CloudFormation, and   Windows PowerShell Desired State Configuration (DSC) to deploy a multi-node SQL Always On FCI. Windows Server Failover Clustering is a prerequisite for deploying an Always On FCI. MSSQL uses WSFC to increase application availability. WSFC provides infrastructure features that complement the high availability and disaster recovery scenarios supported in the AWS Cloud.</p>
 </div>
 <div class="paragraph">
-<p>Implementing WSFC in AWS is similar to deploying it in an on premises setting as long as two key recommendations are met:</p>
+<p>FCI, which was introduced with SQL Server 2008 as a high availability feature, continues to be available in all newer versions of MSSQL. When used on premises, SQL Server FCI is often used purely for high availability within a single data center. On AWS, you can use the SQL Server FCI Quick Start to cover both high availability and disaster recovery requirements.</p>
+</div>
+<div class="paragraph">
+<p>Since FCIs require shared storage, traditionally they had to be deployed within a single data center. On AWS, the shared storage can span multiple Availability Zones, enabling WSFC clusters to span multiple Availability Zones.</p>
+</div>
+<div class="paragraph">
+<p>Implementing WSFC on AWS is similar to deploying it on premises as long as you meet these two requirements:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -902,13 +929,20 @@ report bugs, or submit feature ideas for this Quick Start.
 </ul>
 </div>
 <div class="paragraph">
-<p>This Quick Start provides an automated deployment of SQL Server FCI with Amazon FSx as shared storage leveraging WSFC that meets above mentioned requirements.</p>
+<p>This Quick Start meets these requirements.</p>
 </div>
 <div class="paragraph">
-<p>This guide provides step-by-step instructions for deploying a reference architecture for SQL Server FCI on AWS. It doesn’t provide general configuration and usage information for WSFC and MSSQL. For general guidance and best practices, consult the Microsoft product documentation and the <a href="https://d1.awsstatic.com/whitepapers/best-practices-for-deploying-microsoft-sql-server-on-aws.pdf">Best Practices for Deploying Microsoft SQL Server on AWS</a> whitepaper.</p>
+<p>For more information:</p>
 </div>
-<div class="paragraph">
-<p>This Quick Start supports SQL Server 2019 running on Windows Server 2019.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.aws.amazon.com/fsx/latest/WindowsGuide/what-is.html" target="_blank" rel="noopener">What Is Amazon FSx for Windows File Server?</a></p>
+</li>
+<li>
+<p><a href="https://docs.aws.amazon.com/fsx/latest/WindowsGuide/sql-server.html" target="_blank" rel="noopener">Using Amazon FSx for Windows File Server with Microsoft SQL Server</a></p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -943,7 +977,13 @@ After you deploy the Quick Start, <a href="https://docs.aws.amazon.com/awsaccoun
 <h2 id="_software_licenses">Software licenses</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This Quick Start requires a license for Microsoft SQL Server 2019. A trial license can be obtained from the <a href="https://www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019">Microsoft Evaluation Center</a>. Alternatively, you can use MSSQL Developer Edition which provides full capabilities of Enterprise Edition but does not require license costs if not using for Production environment. This Quick Start deploys MSSQL in Bring-Your-Own-License mode. It does not support deployment of MSSQL License-Included AMIs.</p>
+<p>This Quick Start requires a license for Microsoft SQL Server 2019. You can obtain a trial license from the <a href="https://www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019" target="_blank" rel="noopener">Microsoft Evaluation Center</a>.</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, if you&#8217;re not using the software for a production environment, you can use the MSSQL Developer Edition. This edition provides the full capabilities of Enterprise Edition without requiring license costs.</p>
+</div>
+<div class="paragraph">
+<p>This Quick Start deploys MSSQL in Bring-Your-Own-License mode. It does not support deployment of MSSQL license-included Amazon Machine Images (AMIs).</p>
 </div>
 </div>
 </div>
@@ -951,18 +991,16 @@ After you deploy the Quick Start, <a href="https://docs.aws.amazon.com/awsaccoun
 <h2 id="_architecture">Architecture</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Deploying this Quick Start for a new virtual private cloud (VPC) with
-default parameters builds the following SQL Server FCI environment in the
-AWS Cloud.</p>
+<p>Deploying this Quick Start for a new VPC with default parameters builds the following environment in the AWS Cloud.</p>
 </div>
 <div id="architecture1" class="imageblock">
 <div class="content">
-<img src="images/architecture_diagram.png" alt="Architecture" width="100%" height="100%">
+<img src="images/ms-sql-fci-fsx-architecture_diagram.png" alt="architecture1" width="90%">
 </div>
 <div class="title">Figure 1. Quick Start architecture for SQL Server FCI on AWS</div>
 </div>
 <div class="paragraph">
-<p>As shown in <a href="#architecture1">Figure 1</a>, the Quick Start sets up the following:</p>
+<p>As shown in <a href="#architecture1">Figure 1</a>, this Quick Start sets up the following:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -980,7 +1018,7 @@ AWS Cloud.</p>
 <p>Managed network address translation (NAT) gateways to allow outbound internet access for resources in the private subnets.*</p>
 </li>
 <li>
-<p>A Remote Desktop Gateway host in an Auto Scaling group to allow inbound Remote Desktop (RDP) access to EC2 instances in public and private subnets.*</p>
+<p>A Remote Desktop Gateway (RD Gateway) host in an Auto Scaling group to allow inbound Remote Desktop Protocol (RDP) access to EC2 instances in public and private subnets.*</p>
 </li>
 </ul>
 </div>
@@ -990,21 +1028,17 @@ AWS Cloud.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>An AWS managed directory.*</p>
-</li>
-<li>
-<p>Two EC2 instances running Microsoft Windows with SQL Server installed in a FCI configuration.</p>
-</li>
-<li>
-<p>Two FSx file shares. One for user database storage and another to act as the failover cluster witness.</p>
+<p>Two EC2 instances running Microsoft Windows with SQL Server. These instances are installed as nodes in a WSFC cluster in an Always On FCI configuration across the Availability Zones. Each node contains an Amazon Elastic Block Store (Amazon EBS) root volume.</p>
 </li>
 </ul>
 </div>
 </li>
-</ul>
-</div>
-<div class="ulist">
-<ul>
+<li>
+<p>An Amazon FSx file system, which the FCI nodes share. SQL Server is installed in this file system. This file system also stores all SQL database and log files, and it acts as the WSFC cluster&#8217;s file-share witness.*</p>
+</li>
+<li>
+<p>AWS Directory Service with a managed directory. The Amazon FSx file system and the EC2 Windows instances that host this architecture&#8217;s nodes are joined to the same Active Directory domain.</p>
+</li>
 <li>
 <p>AWS Secrets Manager keys to store credentials.</p>
 </li>
@@ -1015,6 +1049,77 @@ AWS Cloud.</p>
 </div>
 <div class="paragraph">
 <p><span class="small">*The template that deploys the Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.</span></p>
+</div>
+<div class="sect2">
+<h3 id="_comparison_with_sql_server_with_always_on_replication">Comparison with SQL Server with Always On Replication</h3>
+<div class="paragraph">
+<p>To better understand the architecture of the SQL Server FCI Quick Start, it&#8217;s helpful to compare with the <a href="https://fwd.aws/KEvrk?/" target="_blank" rel="noopener">Quick Start for SQL Server with Always On Replication</a>. Both Quick Starts are architected to ensure high availability. Both have EC2 instances clustered using WSFC. Both have database files stored in multiple Availability Zones. What&#8217;s different is the way each Quick Start accomplishes database high availability.</p>
+</div>
+<div class="paragraph">
+<p>The replication-based architecture requires a full installation of SQL Server (Standard or Enterprise edition) on each EC2 instance. Therefore, each EC2 instance requires a SQL Server license.</p>
+</div>
+<div class="paragraph">
+<p><strong>What makes the FCI-based architecture unique is that it requires only one SQL Server license.</strong> With FCI, database-related files aren&#8217;t replicated across the WSFC cluster, and SQL Server is not installed in the local file systems. Instead, this Quick Start creates an Amazon FSx file system and installs SQL Server there. The EC2 instances (FCI nodes) share this file system, which also stores all the SQL database files and log files. In addition, this shared file system acts as the cluster&#8217;s file-share witness.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_advantages_and_disadvantages">Advantages and disadvantages</h3>
+<div class="paragraph">
+<p>The architecture of each SQL Server Quick Start has advantages and disadvantages.</p>
+</div>
+<div class="paragraph">
+<p><strong>SQL Server with Always On Replication Quick Start:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Advantages:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The EBS volume type, capacity, and IOPS can be configured, allowing flexibility.</p>
+</li>
+<li>
+<p>It supports both AWS-provided licensing and Bring Your Own License models for Microsoft SQL.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Disadvantage:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Each WSFC node with SQL Server installed requires a SQL Server license, increasing cost.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><strong>SQL Server FCI Quick Start:</strong></p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Advantage: It requires only one SQL Server license.</p>
+</li>
+<li>
+<p>Disadvantages:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>It relies on an Amazon FSx Multi-AZ file system, which is not supported in all AWS Regions.</p>
+</li>
+<li>
+<p>It requires the customer to provide a SQL Server .iso file and license since AWS-provided SQL licensing is not supported.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>
@@ -1028,6 +1133,9 @@ AWS Cloud.</p>
 AWS services. If you’re new to AWS, see <a href="https://aws.amazon.com/getting-started/" target="_blank" rel="noopener">Getting Started Resource Center</a>
 and <a href="https://aws.amazon.com/training/" target="_blank" rel="noopener">AWS Training and Certification</a>. These sites provide materials for learning how to design,
 deploy, and operate your infrastructure and applications on the AWS Cloud.</p>
+</div>
+<div class="paragraph">
+<p>This Quick Start assumes that you&#8217;re familiar with Microsoft SQL Server and Always On Failover Cluster Instances. For details, consult the <a href="https://docs.microsoft.com/en-us/sql/sql-server/failover-clusters/windows/always-on-failover-cluster-instances-sql-server?view=sql-server-ver15" target="_blank" rel="noopener">Microsoft product documentation</a>.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1062,11 +1170,11 @@ deploy, and operate your infrastructure and applications on the AWS Cloud.</p>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">VPCs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">VPC</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Elastic IP addresses</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Elastic IP address</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
@@ -1078,7 +1186,7 @@ deploy, and operate your infrastructure and applications on the AWS Cloud.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Auto Scaling groups</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Auto Scaling group</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
@@ -1090,7 +1198,7 @@ deploy, and operate your infrastructure and applications on the AWS Cloud.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Managed directories</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS managed directory</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
@@ -1103,13 +1211,10 @@ deploy, and operate your infrastructure and applications on the AWS Cloud.</p>
 <div class="sect3">
 <h4 id="_supported_regions">Supported Regions</h4>
 <div class="paragraph">
-<p><a href="https://aws.amazon.com/about-aws/global-infrastructure/">Regions</a></p>
+<p>This deployment includes AWS Secrets Manager, which isn&#8217;t currently supported in all <a href="https://aws.amazon.com/about-aws/global-infrastructure/" target="_blank" rel="noopener">AWS Regions</a>. For the latest supported Regions, see <a href="https://docs.aws.amazon.com/general/latest/gr/asm.html">AWS Secrets Manager endpoints and quotas</a>.</p>
 </div>
 <div class="paragraph">
-<p>This deployment includes AWS Secrets Manager, which isn’t currently supported in all AWS Regions. For a current list of supported regions, see <a href="https://docs.aws.amazon.com/general/latest/gr/asm.html">Service Endpoints and Quotas</a> in the AWS documentation.</p>
-</div>
-<div class="paragraph">
-<p>This deployment also uses an AWS FSx multi-AZ file system, which is availabile in the following Regions:</p>
+<p>This deployment also uses Amazon FSx, which is available in the following Regions:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -1138,7 +1243,7 @@ deploy, and operate your infrastructure and applications on the AWS Cloud.</p>
 <p>Asia Pacific (Sydney)</p>
 </li>
 <li>
-<p>Europe (Stockholm) Regions</p>
+<p>Europe (Stockholm)</p>
 </li>
 </ul>
 </div>
@@ -1173,21 +1278,21 @@ Certain Regions are available on an opt-in basis. For more information, see <a h
 <div class="sect3">
 <h4 id="_prepare_for_the_deployment">Prepare for the deployment</h4>
 <div class="paragraph">
-<p>The deployment of this Quick Start requires a copy of the Microsoft SQL Server 2019 installation media in the form of an ISO. The typical file name is <strong>SQLServer2019-x64-ENU.iso</strong>.</p>
+<p>The deployment of this Quick Start requires a copy of the Microsoft SQL Server 2019 installation media as an .iso file. The typical file name is <strong>SQLServer2019-x64-ENU.iso</strong>.</p>
 </div>
 <div class="olist arabic">
-<ol class="arabic" start="1">
+<ol class="arabic">
 <li>
-<p>Download the evaluation edition of SQL Server 2019 from <a href="https://www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019">Microsoft Evaluation Center</a>.</p>
+<p>Download the <a href="https://www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019" target="_blank" rel="noopener">SQL Server 2019 evaluation edition</a> from the Microsoft Evaluation Center.</p>
 <div class="paragraph">
 <p>—or—</p>
 </div>
 <div class="paragraph">
-<p>Obtain the ISO file from MSDN, if you have an MSDN account with licenses for server software.</p>
+<p>Obtain the .iso file from the Microsoft Developer Network if you have an MSDN account with licenses for server software.</p>
 </div>
 </li>
 <li>
-<p>Upload the ISO file to an S3 bucket.</p>
+<p>Upload the .iso file to an S3 bucket.</p>
 </li>
 </ol>
 </div>
@@ -1195,26 +1300,23 @@ Certain Regions are available on an opt-in basis. For more information, see <a h
 <div class="sect3">
 <h4 id="_deployment_options">Deployment options</h4>
 <div class="paragraph">
-<p>This Quick Start provides two deployment options:</p>
+<p>When deploying the SQL Server FCI Quick Start, you have three options:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p><strong>Deploy SQL Server FCI into a new VPC</strong>. This option builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, Managed Directory Service or self-managed Active Directory and other infrastructure components. It then deploys SQL Server FCI into this new VPC.</p>
+<p><strong>Deploy it into a new VPC</strong>. This option works with either AWS Directory Service for Microsoft Active Directory (AWS Managed Microsoft AD) or self-managed Active Directory. It builds a new AWS environment consisting of the VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components. It then deploys SQL Server FCI into this new VPC.</p>
 </li>
 <li>
-<p><strong>Deploy SQL Server FCI into existing VPC</strong>.</p>
+<p><strong>Deploy it into an existing VPC using an existing AWS managed directory</strong>. With this option, you join Amazon FSx and the SQL Server FCI instances to an existing AWS Managed Microsoft AD domain.</p>
 </li>
 <li>
-<p>* <strong>With AWS Managed Directory Service</strong>. This option provisions SQL Server FCI in your existing AWS VPC using existing AWS Managed Directory Service.</p>
-</li>
-<li>
-<p>* <strong>With self-managed Active Directory into an existing VPC</strong>. This option provisions SQL Server FCI in your existing AWS VPC using existing self-managed Active Directory.</p>
+<p><strong>Deploy it into an existing VPC using an existing self-managed directory</strong>. With this option, you join Amazon FSx and the SQL Server FCI instances to an existing self-managed Active Directory running on-premises or running on EC2 instances.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>The Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and SQL Server FCI settings, as discussed later in this guide. If you select the template for existing VPC, there is also the option to join Amazon FSx and SQL Server FCI instances to an existing Active Directory domain. This existing AD can either be an instance of AWS Directory Service for Microsoft AD, or a self-managed AD running on-premises or running on EC2 instances.</p>
+<p>The Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and other settings, as discussed later in this guide.</p>
 </div>
 </div>
 </div>
@@ -1224,7 +1326,7 @@ Certain Regions are available on an opt-in basis. For more information, see <a h
 <h2 id="_deployment_steps">Deployment steps</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_sign_in_to_your_aws_account">Sign in to your AWS account</h3>
+<h3 id="_confirm_your_aws_account_configuration">Confirm your AWS account configuration</h3>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
@@ -1245,50 +1347,42 @@ Certain Regions are available on an opt-in basis. For more information, see <a h
 <i class="fa icon-warning" title="Warning"></i>
 </td>
 <td class="content">
-If you’re deploying SQL Server FCI into an existing VPC, make sure that your VPC has two private subnets in different Availability Zones for the workload instances and that the subnets aren’t shared. This Quick Start doesn’t support <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html" target="_blank" rel="noopener">shared subnets</a>. These subnets require <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html" target="_blank" rel="noopener">NAT gateways</a> in their route tables to allow the instances to download packages and software without exposing them to the internet. Also make sure that the domain name option in the DHCP options is configured as explained in <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html" target="_blank" rel="noopener">DHCP options sets</a>. You provide your VPC settings when you launch the Quick Start.
+If you&#8217;re deploying this Quick Start into an existing VPC, make sure that your VPC has two private subnets in different Availability Zones for the workload instances and that the subnets aren&#8217;t shared. This Quick Start doesn&#8217;t support <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-sharing.html" target="_blank" rel="noopener">shared subnets</a>. These subnets require <a href="https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html" target="_blank" rel="noopener">NAT gateways</a> in their route tables to allow the instances to download packages and software without exposing them to the internet. Also make sure that the domain name option in the DHCP options is configured as explained in <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html" target="_blank" rel="noopener">DHCP options sets</a>. You provide your VPC settings when you launch the Quick Start.
 </td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>Each deployment takes about 2 hours to complete.</p>
+<p>Each deployment takes about 2.25 hours to complete.</p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
 <p>Sign in to your AWS account, and choose one of the following options to launch the AWS CloudFormation template. For help with choosing an option, see <a href="#_deployment_options">Deployment options</a> earlier in this guide.</p>
-</li>
-</ol>
-</div>
 <table class="tableblock frame-all grid-all stretch">
 <colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
+<col style="width: 75%;">
+<col style="width: 25%;">
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="http://qs_launch_permalink" target="_blank" rel="noopener">Deploy SQL Server FCI into a new VPC on AWS with new AWS Managed Directory or self-managed Active Directory service</a></p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="http://qs_template_permalink" target="_blank" rel="noopener">View template</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/KmBKD?" target="_blank" rel="noopener">Deploy into a new VPC</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/777zA?" target="_blank" rel="noopener">View template</a></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="http://qs_launch_permalink" target="_blank" rel="noopener">Deploy SQL Server FCI with AWS Mmanaged Directory service into an existing VPC on AWS</a></p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="http://qs_template_permalink" target="_blank" rel="noopener">View template</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/6JaVw?" target="_blank" rel="noopener">Deploy into an existing VPC with AWS Managed Microsoft AD</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/Qpevx?" target="_blank" rel="noopener">View template</a></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="http://qs_launch_permalink" target="_blank" rel="noopener">Deploy SQL Server FCI with self-managed Active Directory into an existing VPC on AWS</a></p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="http://qs_template_permalink" target="_blank" rel="noopener">View template</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/x5n57?" target="_blank" rel="noopener">Deploy into an existing VPC with self-managed Active Directory</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/KrvQD?" target="_blank" rel="noopener">View template</a></p></td>
 </tr>
 </tbody>
 </table>
-<div class="olist arabic">
-<ol class="arabic" start="2">
-<li>
-<p>Check the AWS Region that’s displayed in the upper-right corner of the navigation bar, and change it if necessary. This Region is where the network infrastructure for SQL Server FCI is built. The template is launched in the us-east-1 Region by default. For other choices, see <a href="#_supported_regions">Supported Regions</a> earlier in this guide.</p>
 </li>
-</ol>
-</div>
-<div class="olist arabic">
-<ol class="arabic" start="3">
+<li>
+<p>Check the AWS Region that&#8217;s displayed in the upper-right corner of the navigation bar, and change it if necessary. This Region is where the network infrastructure for the SQL Server FCI Quick Start is built. The template is launched in the us-east-1 Region by default. For other choices, see <a href="#_supported_regions">Supported Regions</a> earlier in this guide.</p>
+</li>
 <li>
 <p>On the <strong>Create stack</strong> page, keep the default setting for the template URL, and then choose <strong>Next</strong>.</p>
 </li>
@@ -1325,7 +1419,7 @@ If you’re deploying SQL Server FCI into an existing VPC, make sure that your V
 <h2 id="_post_deployment_steps">Post-deployment steps</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_run_windows_updates">Run Windows Updates</h3>
+<h3 id="_run_windows_updates">Run Windows updates</h3>
 <div class="paragraph">
 <p>In order to ensure the deployed servers' operating systems and installed applications have the latest Microsoft updates, run Windows Update on each server.</p>
 </div>
@@ -1335,13 +1429,13 @@ If you’re deploying SQL Server FCI into an existing VPC, make sure that your V
 <p>Create an RDP session from the Remote Desktop Gateway server to each deployed server.</p>
 </li>
 <li>
-<p>Open the <strong>Settings</strong> application.</p>
+<p>Choose the <strong>Settings</strong> application.</p>
 </li>
 <li>
-<p>Open <strong>Update &amp; Security</strong>.</p>
+<p>Choose <strong>Update &amp; Security</strong>.</p>
 </li>
 <li>
-<p>Click <strong>Check for updates</strong>.</p>
+<p>Choose <strong>Check for updates</strong>.</p>
 </li>
 <li>
 <p>Install any updates and reboot if necessary.</p>
@@ -1355,73 +1449,57 @@ If you’re deploying SQL Server FCI into an existing VPC, make sure that your V
 <h2 id="_test_the_deployment">Test the deployment</h2>
 <div class="sectionbody">
 <div class="olist arabic">
-<ol class="arabic" start="1">
+<ol class="arabic">
 <li>
 <p>Open an RDP session to one of the two SQL servers.</p>
 </li>
 <li>
-<p>Open Windows Administrative Tools and launch Failover Cluster Manager.</p>
-</li>
-</ol>
-</div>
+<p>Open Windows <strong>Administrative Tools</strong>, and launch <strong>Failover Cluster Manager</strong>.</p>
 <div id="postdeploy1" class="imageblock">
 <div class="content">
-<img src="images/image1.png" alt="Architecture" width="100%" height="100%">
+<a class="image" href="images/image1.png"><img src="images/image1.png" alt="postdeploy1"></a>
 </div>
 <div class="title">Figure 3. Failover Cluster Manager</div>
 </div>
-<div class="olist arabic">
-<ol class="arabic" start="3">
-<li>
-<p>Select <strong>nodes</strong> and ensure both nodes are online.</p>
 </li>
-</ol>
-</div>
+<li>
+<p>Choose <strong>Nodes</strong>, and ensure that both nodes are online.</p>
 <div id="postdeploy2" class="imageblock">
 <div class="content">
-<img src="images/image2.png" alt="Architecture" width="100%" height="100%">
+<img src="images/image2.png" alt="postdeploy2">
 </div>
 <div class="title">Figure 4. Both nodes showing online</div>
 </div>
-<div class="olist arabic">
-<ol class="arabic" start="4">
-<li>
-<p>Select the failover cluster and verify that both the cluster and the file share witness are online.</p>
 </li>
-</ol>
-</div>
+<li>
+<p>Select the failover cluster, and verify that both the cluster and the file-share witness are online.</p>
 <div id="postdeploy3" class="imageblock">
 <div class="content">
-<img src="images/image3.png" alt="Architecture" width="100%" height="100%">
+<img src="images/image3.png" alt="postdeploy3">
 </div>
-<div class="title">Figure 5. Cluster overview showing cluster and file share witness are online</div>
+<div class="title">Figure 5. Cluster overview showing that both the cluster and the file-share witness are online</div>
 </div>
-<div class="olist arabic">
-<ol class="arabic" start="5">
-<li>
-<p>Download <a href="https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver15">SQL Server Management Studio</a>.</p>
 </li>
 <li>
-<p>Install SQL Server Management Studio. Note that the installation will require a reboot.</p>
+<p>Download <a href="https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver15" target="_blank" rel="noopener">SQL Server Management Studio (SSMS)</a>.</p>
 </li>
 <li>
-<p>After rebooting, log back into the SQL server.</p>
+<p>Install SQL Server Management Studio. The installation requires a reboot.</p>
 </li>
 <li>
-<p>Launch SQL Server Management Studio and connect to the FCI.</p>
+<p>After rebooting, log back in to the SQL server.</p>
 </li>
-</ol>
-</div>
+<li>
+<p>Launch SQL Server Management Studio, and connect to the FCI.</p>
 <div id="postdeploy4" class="imageblock">
 <div class="content">
-<img src="images/image4.png" alt="Architecture" width="50%" height="50%">
+<img src="images/image4.png" alt="50%">
 </div>
 <div class="title">Figure 6. Connecting to the cluster</div>
 </div>
-<div class="olist arabic">
-<ol class="arabic" start="9">
+</li>
 <li>
-<p>If you are able to log in then the deployment was successful.</p>
+<p>If you are able to log in, the deployment was successful.</p>
 </li>
 </ol>
 </div>
@@ -1431,7 +1509,29 @@ If you’re deploying SQL Server FCI into an existing VPC, make sure that your V
 <h2 id="_troubleshooting">Troubleshooting</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>If the deployment fails, open the <a href="https://console.aws.amazon.com/systems-manager/home?region=us-east-1">Systems Manager console</a> and select your deployment Region. Select <strong>Automation</strong> from the left-hand side and locate the failed automation document. Navigate to the failed step and expand <strong>Output</strong> to view the automation logs. Follow the link to CloudWatch Logs to view detailed automation logs.</p>
+<p>If the deployment fails, follow these steps:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Open the <a href="https://console.aws.amazon.com/systems-manager/home?region=us-east-1" target="_blank" rel="noopener">AWS Systems Manager console</a>.</p>
+</li>
+<li>
+<p>Select your deployment Region.</p>
+</li>
+<li>
+<p>Choose <strong>Automation</strong> from the left-hand side, and locate the failed automation document.</p>
+</li>
+<li>
+<p>Navigate to the failed step.</p>
+</li>
+<li>
+<p>Expand <strong>Output</strong> to view the automation logs.</p>
+</li>
+<li>
+<p>Follow the link to Amazon CloudWatch Logs to view detailed automation logs.</p>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -1442,7 +1542,7 @@ If you’re deploying SQL Server FCI into an existing VPC, make sure that your V
 <p><strong>Q.</strong> I encountered a <strong>CREATE_FAILED</strong> error when I launched the Quick Start.</p>
 </div>
 <div class="paragraph">
-<p><strong>A.</strong> If AWS CloudFormation fails to create the stack, relaunch the template with <strong>Rollback on failure</strong> set to <strong>Disabled</strong>. This setting is under <strong>Advanced</strong> in the AWS CloudFormation console on the <strong>Configure stack options</strong> page. With this setting, the stack’s state is retained, and the instance keeps running so that you can troubleshoot the issue. (For Windows, look at the log files in <code>%ProgramFiles%\Amazon\EC2ConfigService</code> and <code>C:\cfn\log</code>.)</p>
+<p><strong>A.</strong> If AWS CloudFormation fails to create the stack, relaunch the template with <strong>Rollback on failure</strong> set to <strong>Disabled</strong>. This setting is under <strong>Advanced</strong> in the AWS CloudFormation console on the <strong>Configure stack options</strong> page. With this setting, the stack&#8217;s state is retained, and the instance keeps running so that you can troubleshoot the issue. (For Windows, look at the log files in <code>%ProgramFiles%\Amazon\EC2ConfigService</code> and <code>C:\cfn\log</code>.)</p>
 </div>
 <div class="admonitionblock warning">
 <table>
@@ -1468,46 +1568,46 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 </div>
 </div>
 <div class="sect1">
-<h2 id="_additional_resources">Additional Resources</h2>
+<h2 id="_additional_resources">Additional resources</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p><strong>Amazon FSx</strong></p>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p>Getting Started Resource Center</p>
+<p><a href="https://docs.aws.amazon.com/fsx/latest/WindowsGuide/what-is.html" target="_blank" rel="noopener">What Is Amazon FSx for Windows File Server?</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/general/latest/gr/">AWS General Reference</a></p>
-</li>
-<li>
-<p><a href="https://docs.aws.amazon.com/general/latest/gr/glos-chap.html">AWS Glossary</a></p>
+<p><a href="https://docs.aws.amazon.com/fsx/latest/WindowsGuide/sql-server.html" target="_blank" rel="noopener">Using Amazon FSx for Windows File Server with Microsoft SQL Server</a></p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p><strong>AWS services</strong></p>
+<p><strong>Other AWS services</strong></p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>AWS CloudFormation</p>
+<p><a href="https://docs.aws.amazon.com/cloudformation/" target="_blank" rel="noopener">AWS CloudFormation</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html">Amazon EBS</a></p>
+<p><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AmazonEBS.html" target="_blank" rel="noopener">Amazon Elastic Block Store (Amazon EBS)</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/ec2/">Amazon EC2</a></p>
+<p><a href="https://docs.aws.amazon.com/ec2/" target="_blank" rel="noopener">Amazon Elastic Compute Cloud (Amazon EC2)</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/iam/">IAM</a></p>
+<p><a href="https://docs.aws.amazon.com/iam/" target="_blank" rel="noopener">AWS Identity and Access Management (IAM)</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/secretsmanager/index.html">AWS Secrets Manager</a></p>
+<p><a href="https://docs.aws.amazon.com/secretsmanager/" target="_blank" rel="noopener">AWS Secrets Manager</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/systems-manager/index.html">AWS Systems Manager</a></p>
+<p><a href="https://docs.aws.amazon.com/systems-manager/" target="_blank" rel="noopener">AWS Systems Manager</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/vpc/">Amazon VPC</a></p>
+<p><a href="https://docs.aws.amazon.com/vpc/" target="_blank" rel="noopener">Amazon Virtual Private Cloud (Amazon VPC)</a></p>
 </li>
 </ul>
 </div>
@@ -1517,10 +1617,10 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://msdn.microsoft.com/library/79d2ea5a-edd8-4b3b-9502-96202057b01a">Windows Server Failover Clustering (WSFC) with SQL Server</a></p>
+<p><a href="https://msdn.microsoft.com/library/79d2ea5a-edd8-4b3b-9502-96202057b01a" target="_blank" rel="noopener">Windows Server Failover Clustering with SQL Server</a></p>
 </li>
 <li>
-<p><a href="https://msdn.microsoft.com/en-us/library/hh510230.aspx">Always On Availability Groups</a></p>
+<p><a href="https://msdn.microsoft.com/en-us/library/hh510230.aspx" target="_blank" rel="noopener">Always On availability groups</a></p>
 </li>
 </ul>
 </div>
@@ -1530,13 +1630,13 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://aws.amazon.com/quickstart/">AWS Quick Start home page</a></p>
+<p><a href="https://aws.amazon.com/quickstart/" target="_blank" rel="noopener">AWS Quick Start home page</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/quickstart/latest/active-directory-ds/">Microsoft Active Directory DS on the AWS Cloud</a></p>
+<p><a href="https://aws.amazon.com/quickstart/architecture/active-directory-ds/" target="_blank" rel="noopener">Active Directory Domain Services on AWS</a></p>
 </li>
 <li>
-<p><a href="https://docs.aws.amazon.com/quickstart/latest/rd-gateway/">Microsoft Remote Desktop Gateway on the AWS Cloud</a></p>
+<p><a href="https://aws.amazon.com/quickstart/architecture/rd-gateway/" target="_blank" rel="noopener">Remote Desktop Gateway on AWS</a></p>
 </li>
 </ul>
 </div>
@@ -1559,7 +1659,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </table>
 </div>
 <div class="sect2">
-<h3 id="_launch_into_a_new_vpc">Launch into a new VPC</h3>
+<h3 id="_parameters_for_deploying_into_a_new_vpc">Parameters for deploying into a new VPC</h3>
 <table class="tableblock frame-all grid-all stretch">
 <caption class="title">Table 1. Network configuration</caption>
 <colgroup>
@@ -1579,7 +1679,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">Availability Zones
 (<code>AvailabilityZones</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of Availability Zones to use for the subnets in the VPC. Note: The logical order is preserved and 2 zones must be provided unless the Third Availability Zone parameter is specified, in which case 3 zones must be provided.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Availability Zones to use for the subnets in the VPC. Two Availability Zones are used and the logical order is preserved.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">VPC CIDR block
@@ -1591,13 +1691,13 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">Public subnet 1 CIDR
 (<code>PublicSubnet1CIDR</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>10.0.128.0/20</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CIDR block for the public subnet 2 located in Availability Zone 2.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CIDR block for public subnet 1 located in Availability Zone 1.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Public subnet 2 CIDR
 (<code>PublicSubnet2CIDR</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>10.0.144.0/20</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">CIDR block for the optional public subnet 3 located in Availability Zone 3.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CIDR block for public subnet 2 located in Availability Zone 2.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Private subnet 1 CIDR
@@ -1629,19 +1729,19 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Allowed RDGW external access CIDR
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allowed RD Gateway external access CIDR
 (<code>RDGWCIDR</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Allowed CIDR block for external access to the Remote Desktop Gateway instances.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Number of RDGW hosts
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of RD Gateway hosts
 (<code>NumberOfRDGWHosts</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Enter the number of Remote Desktop Gateway hosts to create.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of Remote Desktop Gateway hosts to create.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">RDGW instance type
+<td class="tableblock halign-left valign-top"><p class="tableblock">RD Gateway instance type
 (<code>RDGWInstanceType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>t2.large</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the Remote Desktop Gateway instances.</p></td>
@@ -1664,10 +1764,10 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AD scenario type
+<td class="tableblock halign-left valign-top"><p class="tableblock">Active Directory scenario type
 (<code>ADScenarioType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>AWS Directory Service for Microsoft AD (Enterprise Edition)</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Select the type of AD DS deployment to use: AWS Directory Service for Microsoft AD or managing your own Amazon EC2 AD instances.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Type of AD DS deployment to use. If you want to manage your own Amazon EC2 Active Directory instances, choose "Microsoft AD on Amazon EC2."</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain DNS name
@@ -1679,19 +1779,19 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain NetBIOS name
 (<code>DomainNetBIOSName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>example</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the domain for users of earlier versions of Windows. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain admin user name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain administrator user name
 (<code>DomainAdminUser</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Admin</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">User name for the account that will be added as domain administrator. This is separate from the default administrator account. Note: This user is used for Self-Managed AD Scenario, when using AWS Directory Service for Microsoft AD "Admin" is the default regardless of the value provided.  provided.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">User name for the account that will be added as domain administrator. This is separate from the default "Administrator" account. You can specify this user name only for the self-managed Active Directory scenario. If you&#8217;re using the AWS Directory Service for Microsoft AD, the default stays "Admin" regardless of any value provided.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain admin password
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain administrator password
 (<code>DomainAdminPassword</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Password for the domain admin user. Must be at least 8 characters containing letters, numbers, and symbols.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Password for the domain administrator. Must be at least 8 characters containing letters, numbers, and symbols.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1714,37 +1814,37 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain controller 1 instance type
 (<code>ADServer1InstanceType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>m5.xlarge</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the first Active Directory instance.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the first Active Directory instance, located in Availability Zone 1.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain controller 1 NetBIOS name
 (<code>ADServer1NetBIOSName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>DC1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the first Active Directory server (up to 15 characters).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the first Active Directory instance, located in Availability Zone 1. This name can have up to 15 characters.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain controller 1 private IP address
 (<code>ADServer1PrivateIP</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>10.0.0.10</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Fixed private IP for the first Active Directory server located in Availability Zone 1.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fixed private IP address for the first Active Directory instance, located in Availability Zone 1.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain controller 2 instance type
 (<code>ADServer2InstanceType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>m5.xlarge</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the second Active Directory instance.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EC2 instance type for the second Active Directory instance, located in Availability Zone 2.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain controller 2 NetBIOS name
 (<code>ADServer2NetBIOSName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>DC2</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the second Active Directory server (up to 15 characters).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the second Active Directory instance, located in Availability Zone 2. This name can have up to 15 characters.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Domain controller 2 private IP address
 (<code>ADServer2PrivateIP</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>10.0.32.10</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Fixed private IP for the second Active Directory server located in Availability Zone 2.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fixed private IP address for the second Active Directory instance, located in Availability Zone 2.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1770,33 +1870,33 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">Name of an existing EC2 key pair. All instances will launch with this key pair.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Server1 NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server1 NetBIOS name
 (<code>SqlFSxServerNetBIOSName1</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFSx1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the SQL server (up to 15 characters)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the primary instance. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Server2 NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server2 NetBIOS name
 (<code>SqlFSxServerNetBIOSName2</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFSx2</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the SQL server (up to 15 characters)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the secondary instance. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Windows version
 (<code>WindowsVersion</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>Windows_Server-2019-English-Full-Base*</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Select Windows version to run SQL Server.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Choose the Windows version to run SQL Server.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Workload Servers EC2 instance type
+<td class="tableblock halign-left valign-top"><p class="tableblock">Workload servers EC2 instance type
 (<code>WorkloadInstanceType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>r5.2xlarge</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type of EC2 instance for the Workload instances</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Type of EC2 instance for the workload instances.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 6. Amazon FSx Windows File Share Configuration</caption>
+<caption class="title">Table 6. Amazon FSx Windows file-share configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -1811,16 +1911,16 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share volume size
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share volume size
 (<code>FileShareVolumeSize</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>32</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Capacity of the volume used to store SQL Server files. Minimum value is 32 and maximum 65536. (GB)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Capacity (GB) of the volume used to store SQL Server files. Minimum value is 32 and maximum 65536.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share throughput capacity (MB/s)
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share throughput capacity
 (<code>FileShareThroughputCapacity</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>8</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share throughput capacity, in 2 to the n&#8217;th power increments, where 3 &#8656; n &#8656; 11, i.e. (between 2^3 and 2^11).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share throughput capacity (MB/s) in 2 to the nth power increments, where 3 ≤ n ≤ 11, i.e. between 2^3 and 2^11.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1843,36 +1943,36 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket for SQL media
 (<code>MSSQLMediaBucketName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The S3 bucket name wherefrom MSSQL media can be downloaded. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the S3 bucket from which MSSQL media can be downloaded. You can use lowercase letters, uppercase letters, and hyphens (-). Do not start or end with a hyphen (-).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">S3 key for SQL media path
 (<code>MSSQLMediaPathKey</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SQLServer2019-x64-ENU.iso</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The S3 bucket key wherefrom MSSQL media can be downloaded. This string can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Key for the S3 bucket from which MSSQL media can be downloaded. You can use numbers, lowercase letters, uppercase letters, hyphens (-), and forward slashes (/).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Windows Server failover cluster name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Windows Server Failover Cluster (WSFC) name
 (<code>SqlFSxWSFCName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>WSFC1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Windows Server failover cluster name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the Windows Server Failover Cluster (WSFC). You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCI name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Failover cluster instance (FCI) name
 (<code>SqlFSxFCIName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFCI</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCI name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the failover cluster instance (FCI). You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SQL administrator account(s)
+<td class="tableblock halign-left valign-top"><p class="tableblock">SQL administrator account or accounts
 (<code>SQLAdminAccounts</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>example\Admin</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Comma-separated user names will be used as MSSQL DB Administrator. It could be AD domain admin, other local or domain users.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Comma-separated user names are used as MSSQL DB administrators. It could be Active Directory domain administrators or other local or domain users.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 8. AWS Quick Start Configuration</caption>
+<caption class="title">Table 8. AWS Quick Start configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -1887,30 +1987,30 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 Bucket Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket name
 (<code>QSS3BucketName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>aws-quickstart</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for the Quick Start assets. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the S3 bucket for your copy of the Quick Start assets. Keep the default name unless you are customizing the template. Changing the name updates code references to point to a new Quick Start location. This name can include numbers, lowercase letters, uppercase letters, and hyphens, but do not start or end with a hyphen (-). See <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket region
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket Region
 (<code>QSS3BucketRegion</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>us-east-1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. Keep the default Region unless you are customizing the template. Changing this Region updates code references to point to a new Quick Start location. When using your own bucket, specify the Region. See <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 Key Prefix
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 key prefix
 (<code>QSS3KeyPrefix</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>quickstart-microsoft-sql-fci-fsx/</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 key prefix that is used to simulate a directory for your copy of the Quick Start assets. Keep the default prefix unless you are customizing the template. Changing this prefix updates code references to point to a new Quick Start location. This prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slashes (/). End with a forward slash. See <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html" class="bare">https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html</a> and <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_launch_with_aws_managed_directory_service_into_an_existing_vpc">Launch with AWS managed directory service into an existing VPC</h3>
+<h3 id="_parameters_for_deploying_into_an_existing_vpc_with_aws_managed_microsoft_ad">Parameters for deploying into an existing VPC with AWS Managed Microsoft AD</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 9. Network Configuration</caption>
+<caption class="title">Table 9. Network configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -1928,19 +2028,19 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">VPC ID
 (<code>VPCID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ID of your existing VPC for deployment</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of your existing VPC for deployment.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Private Subnet 1 ID
+<td class="tableblock halign-left valign-top"><p class="tableblock">Private subnet 1 ID
 (<code>PrivateSubnet1ID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ID of private subnet 1 in Availability Zone 1 for the Workload (e.g., subnet-a0246dcd)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of private subnet 1 in Availability Zone 1 for the workload (e.g., subnet-a0246dcd).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Private Subnet 2 ID
+<td class="tableblock halign-left valign-top"><p class="tableblock">Private subnet 2 ID
 (<code>PrivateSubnet2ID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ID of private subnet 2 in Availability Zone 2 for the Workload (e.g., subnet-a0246dcd)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of private subnet 2 in Availability Zone 2 for the workload (e.g., subnet-a0246dcd).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">VPC CIDR
@@ -1951,7 +2051,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 10. Microsoft Active Directory Configuration</caption>
+<caption class="title">Table 10. Microsoft Active Directory configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -1966,43 +2066,43 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain DNS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain DNS name
 (<code>DomainDNSName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>example.com</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Fully qualified domain name (FQDN) e.g. example.com</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fully qualified domain name (FQDN).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain NetBIOS name
 (<code>DomainNetBIOSName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>EXAMPLE</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the domain for users of earlier versions of Windows. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain Admin User Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain administrator user name
 (<code>DomainAdminUser</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>StackAdmin</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">User name for the account that will be used as Domain Administrator. This is separate from the default "Administrator" account</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">User name for the account that will be used as domain administrator. This is separate from the default "Administrator" account.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain Admin Password
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain administrator password
 (<code>DomainAdminPassword</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Password for the domain admin user.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Password for the domain administrator.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Security Group ID for AD Domain Members
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security group ID for Active Directory domain members
 (<code>DomainMemberSGID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ID of the Domain Member Security Group (e.g., sg-9cb7d0e5)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of the domain member security group (e.g., sg-9cb7d0e5).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Active Directory DNS IP addresses
 (<code>ADDnsIpAddresses</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DNS IP addresses. Comma-separated.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DNS IP addresses for Active Directory.  Separate these with commas.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The ID of the AWS Directory Service directory.
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of the AWS Directory Service directory
 (<code>DirectoryId</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The ID of the AWS Directory Service directory.</p></td>
@@ -2010,7 +2110,7 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 11. Amazon EC2 Configuration</caption>
+<caption class="title">Table 11. Amazon EC2 configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2025,19 +2125,19 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Server1 NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server1 NetBIOS name
 (<code>SqlFSxServerNetBIOSName1</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFSx1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the SQL server (up to 15 characters)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the primary instance. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Server2 NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server2 NetBIOS name
 (<code>SqlFSxServerNetBIOSName2</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFSx2</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the SQL server (up to 15 characters)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the secondary instance. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SSH Key Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSH key name
 (<code>KeyPairName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Name of an existing EC2 key pair. All instances will launch with this key pair.</p></td>
@@ -2049,15 +2149,15 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">Select Windows version to run SQL Server.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Workload Servers Instance Type
+<td class="tableblock halign-left valign-top"><p class="tableblock">Workload servers instance type
 (<code>WorkloadInstanceType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>r5.2xlarge</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type of EC2 instance for the Workload instances</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Type of EC2 instance for the workload instances.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 12. Amazon FSx Windows File Share Configuration</caption>
+<caption class="title">Table 12. Amazon FSx Windows file-share configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2072,16 +2172,16 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share volume size
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share volume size
 (<code>FileShareVolumeSize</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>32</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Capacity of the volume used to store SQL Server files. Minimum value is 32 and maximum 65536. (GB)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Capacity (GB) of the volume used to store SQL Server files. Minimum value is 32 and maximum 65536.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share throughput capacity (MB/s)
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share throughput capacity
 (<code>FileShareThroughputCapacity</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>8</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share throughput capacity, in 2 to the n&#8217;th power increments, where 3 &#8656; n &#8656; 11, i.e. (between 2^3 and 2^11).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share throughput capacity (MB/s) in 2 to the nth power increments, where 3 ≤ n ≤ 11, i.e. between 2^3 and 2^11.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2101,39 +2201,39 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket for SQL media
 (<code>MSSQLMediaBucketName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ss-experiments</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The S3 bucket name wherefrom MSSQL media can be downloaded. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the S3 bucket from which MSSQL media can be downloaded. You can use lowercase letters, uppercase letters, and hyphens (-). Do not start or end with a hyphen (-).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 key for SQL media path
 (<code>MSSQLMediaPathKey</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>quickstart-microsoft-SqlFSx/sql-installation-media/en_sql_server_2019_developer_x64_dvd_baea4195.iso</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The S3 bucket key wherefrom MSSQL media can be downloaded. This string can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Key for the S3 bucket from which MSSQL media can be downloaded. You can use numbers, lowercase letters, uppercase letters, hyphens (-), and forward slashes (/).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Windows Server Failover Cluster (WSFC) name
 (<code>SqlFSxWSFCName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>WSFC1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Windows Server failover cluster name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the Windows Server Failover Cluster (WSFC). You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Failover cluster instance (FCI) name
 (<code>SqlFSxFCIName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFCI</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCI name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the failover cluster instance (FCI). You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SQL administrator account or accounts
 (<code>SQLAdminAccounts</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>contoso\Administrator</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Comma-separated user names will be used as MSSQL DB Administrator. It could be AD domain admin, other local or domain users.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Comma-separated user names will be used as MSSQL DB administrators. It could be Active Directory domain administrators or other local or domain users.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 14. AWS Quick Start Configuration</caption>
+<caption class="title">Table 14. AWS Quick Start configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2148,30 +2248,30 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 Bucket Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket name
 (<code>QSS3BucketName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>aws-quickstart</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for the Quick Start assets. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the S3 bucket for your copy of the Quick Start assets. Keep the default name unless you are customizing the template. Changing the name updates code references to point to a new Quick Start location. This name can include numbers, lowercase letters, uppercase letters, and hyphens, but do not start or end with a hyphen (-). See <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket region
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket Region
 (<code>QSS3BucketRegion</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>us-east-1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. Keep the default Region unless you are customizing the template. Changing this Region updates code references to point to a new Quick Start location.  When using your own bucket, specify the Region. See <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 Key Prefix
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 key prefix
 (<code>QSS3KeyPrefix</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>quickstart-microsoft-SqlFSx/</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 key prefix that is used to simulate a directory for your copy of the Quick Start assets. Keep the default prefix unless you are customizing the template. Changing this prefix updates code references to point to a new Quick Start location. This prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slashes (/). End with a forward slash. See <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html" class="bare">https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html</a> and <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect2">
-<h3 id="_launch_with_self_managed_active_directory_into_an_existing_vpc">Launch with self-managed Active Directory into an existing VPC</h3>
+<h3 id="_parameters_for_deploying_into_an_existing_vpc_with_self_managed_active_directory">Parameters for deploying into an existing VPC with self-managed Active Directory</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 15. Network Configuration</caption>
+<caption class="title">Table 15. Network configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2198,21 +2298,21 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">CIDR block for the VPC.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Private Subnet 1 ID
+<td class="tableblock halign-left valign-top"><p class="tableblock">Private subnet 1 ID
 (<code>PrivateSubnet1ID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ID of private subnet 1 in Availability Zone 1 for the Workload (e.g., subnet-a0246dcd)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of private subnet 1 in Availability Zone 1 for the workload (e.g., subnet-a0246dcd).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Private Subnet 2 ID
+<td class="tableblock halign-left valign-top"><p class="tableblock">Private subnet 2 ID
 (<code>PrivateSubnet2ID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ID of private subnet 2 in Availability Zone 2 for the Workload (e.g., subnet-a0246dcd)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of private subnet 2 in Availability Zone 2 for the workload (e.g., subnet-a0246dcd).</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 16. Microsoft Active Directory Configuration</caption>
+<caption class="title">Table 16. Microsoft Active Directory configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2227,45 +2327,45 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain DNS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain DNS name
 (<code>DomainDNSName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>example.com</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Fully qualified domain name (FQDN) e.g. example.com</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Fully qualified domain name (FQDN).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain NetBIOS name
 (<code>DomainNetBIOSName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>EXAMPLE</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the domain for users of earlier versions of Windows. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain Admin User Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain administrator user name
 (<code>DomainAdminUser</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>StackAdmin</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">User name for the account that will be used as Domain Administrator. This is separate from the default "Administrator" account</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">User name for the account that will be used as domain administrator. This is separate from the default "Administrator" account.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Domain Admin Password
+<td class="tableblock halign-left valign-top"><p class="tableblock">Domain administrator password
 (<code>DomainAdminPassword</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Password for the domain admin user.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Password for the domain administrator.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Security Group ID for AD Domain Members
+<td class="tableblock halign-left valign-top"><p class="tableblock">Security group ID for Active Directory domain members
 (<code>DomainMemberSGID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">ID of the Domain Member Security Group (e.g., sg-9cb7d0e5)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of the domain member security group (e.g., sg-9cb7d0e5).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Active Directory DNS IP addresses
 (<code>ADDnsIpAddresses</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">DNS IP addresses. Comma-separated.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">DNS IP addresses for Active Directory. Separate these with commas.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 17. Amazon EC2 Configuration</caption>
+<caption class="title">Table 17. Amazon EC2 configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2280,19 +2380,19 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Server1 NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server1 NetBIOS name
 (<code>SqlFSxServerNetBIOSName1</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFSx1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the SQL server (up to 15 characters)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the primary instance. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Server2 NetBIOS Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server2 NetBIOS name
 (<code>SqlFSxServerNetBIOSName2</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFSx2</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the SQL server (up to 15 characters)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">NetBIOS name of the secondary instance. You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SSH Key Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">SSH key name
 (<code>KeyPairName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Name of an existing EC2 key pair. All instances will launch with this key pair.</p></td>
@@ -2304,15 +2404,15 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 <td class="tableblock halign-left valign-top"><p class="tableblock">Select Windows version to run SQL Server.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Workload Servers Instance Type
+<td class="tableblock halign-left valign-top"><p class="tableblock">Workload servers instance type
 (<code>WorkloadInstanceType</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>r5.2xlarge</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type of EC2 instance for the Workload instances</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Type of EC2 instance for the workload instances.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 18. Amazon FSx Windows File Share Configuration</caption>
+<caption class="title">Table 18. Amazon FSx Windows file-share configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2327,16 +2427,16 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share volume size
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share volume size
 (<code>FileShareVolumeSize</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>32</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Capacity of the volume used to store SQL Server files. Minimum value is 32 and maximum 65536. (GB)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Capacity (GB) of the volume used to store SQL Server files. Minimum value is 32 and maximum 65536.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share throughput capacity (MB/s)
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share throughput capacity
 (<code>FileShareThroughputCapacity</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>8</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">File share throughput capacity, in 2 to the n&#8217;th power increments, where 3 &#8656; n &#8656; 11, i.e. (between 2^3 and 2^11).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">File-share throughput capacity (MB/s) in 2 to the nth power increments, where 3 ≤ n ≤ 11, i.e. between 2^3 and 2^11.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2356,39 +2456,39 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket for SQL media
 (<code>MSSQLMediaBucketName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ss-experiments</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The S3 bucket name wherefrom MSSQL media can be downloaded. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the S3 bucket from which MSSQL media can be downloaded. You can use lowercase letters, uppercase letters, and hyphens (-). Do not start or end with a hyphen (-).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 key for SQL media path
 (<code>MSSQLMediaPathKey</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>quickstart-microsoft-SqlFSx/sql-installation-media/en_sql_server_2019_developer_x64_dvd_baea4195.iso</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The S3 bucket key wherefrom MSSQL media can be downloaded. This string can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Key for the S3 bucket from which MSSQL media can be downloaded. You can use numbers, lowercase letters, uppercase letters, hyphens (-), and forward slashes (/).</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Windows Server Failover Cluster (WSFC) name
 (<code>SqlFSxWSFCName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>WSFC1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Windows Server failover cluster name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the Windows Server Failover Cluster (WSFC). You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Failover cluster instance (FCI) name
 (<code>SqlFSxFCIName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>SqlFCI</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">FCI name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the failover cluster instance (FCI). You can use up to 15 characters.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>NO_LABEL</strong>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SQL administrator account or accounts
 (<code>SQLAdminAccounts</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>contoso\Administrator</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Comma-separated user names will be used as MSSQL DB Administrator. It could be AD domain admin, other local or domain users.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Comma-separated user names are used as MSSQL DB administrators. It could be Active Directory domain administrators or other local or domain users.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 20. AWS Quick Start Configuration</caption>
+<caption class="title">Table 20. AWS Quick Start configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2403,22 +2503,22 @@ Region</code>, and <code>Quick Start S3 key prefix</code>. Changing these parame
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 Bucket Name
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket name
 (<code>QSS3BucketName</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>aws-quickstart</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S3 bucket name for the Quick Start assets. This string can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the S3 bucket for your copy of the Quick Start assets. Keep the default name unless you are customizing the template. Changing the name updates code references to point to a new Quick Start location. This name can include numbers, lowercase letters, uppercase letters, and hyphens, but do not start or end with a hyphen (-). See <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket region
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 bucket Region
 (<code>QSS3BucketRegion</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>us-east-1</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. Keep the default Region unless you are customizing the template. Changing this Region updates code references to point to a new Quick Start location.  When using your own bucket, specify the Region. See <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 Key Prefix
+<td class="tableblock halign-left valign-top"><p class="tableblock">Quick Start S3 key prefix
 (<code>QSS3KeyPrefix</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>quickstart-microsoft-SqlFSx/</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">S3 key prefix that is used to simulate a directory for your copy of the Quick Start assets. Keep the default prefix unless you are customizing the template. Changing this prefix updates code references to point to a new Quick Start location. This prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slashes (/). End with a forward slash. See <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html" class="bare">https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingMetadata.html</a> and <a href="https://aws-quickstart.github.io/option1.html" class="bare">https://aws-quickstart.github.io/option1.html</a>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -2473,11 +2573,11 @@ and to share your customizations with others.</p>
 </html>
 <!--
 repo commit:
-d04e581563a91557497a3c453208b75febfbac6f
+01bb4c255b1c52041078309beddfbf2fbbd1cb57
 
 submodule config:
-+59b9927c61cd1831141cf0350520c89abb2246da docs/boilerplate (heads/main)
- 53fbedf058adaea101a587ec0fa9d84cb2a05587 submodules/quickstart-aws-vpc (v1.0-56-g53fbedf)
- ae836e04df35534723c9cef52eb91cb38bbfc391 submodules/quickstart-microsoft-activedirectory (remotes/origin/master-90-gae836e0)
- 3d84d31563bfaed1cbb28486ba64ea5ca238aa29 submodules/quickstart-microsoft-rdgateway (remotes/origin/master-61-g3d84d31)
+ 59b9927c61cd1831141cf0350520c89abb2246da docs/boilerplate (heads/main)
+ c89deff157bdf59bb159878ebdaea53ae6753759 submodules/quickstart-aws-vpc (v1.0-41-gc89deff)
+ 3707735789044f7121b4904eff062bfae3477b62 submodules/quickstart-microsoft-activedirectory (remotes/origin/master)
+ e4d098d825db51a56429891d08ba9417dd958a22 submodules/quickstart-microsoft-rdgateway (remotes/origin/master)
 -->
