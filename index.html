@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.15">
+<meta name="generator" content="Asciidoctor 2.0.16">
 <title>SQL Server Failover Cluster Instance on the AWS Cloud</title>
 <style>
 
@@ -856,6 +856,7 @@ p.footer-text a{color:#d7d8d8}
 <li><a href="#_troubleshooting">Troubleshooting</a></li>
 <li><a href="#_faq">FAQ</a></li>
 <li><a href="#_additional_resources">Additional resources</a></li>
+<li><a href="#_customer_responsibility">Customer responsibility</a></li>
 <li><a href="#_parameter_reference">Parameter reference</a>
 <ul class="sectlevel2">
 <li><a href="#_parameters_for_deploying_into_a_new_vpc">Parameters for deploying into a new VPC</a></li>
@@ -1244,43 +1245,12 @@ deploy, and operate your infrastructure and applications on the AWS Cloud.</p>
 </table>
 </div>
 <div class="sect3">
-<h4 id="_supported_regions">Supported Regions</h4>
+<h4 id="_supported_aws_regions">Supported AWS Regions</h4>
 <div class="paragraph">
-<p>This deployment includes AWS Secrets Manager, which isn&#8217;t currently supported in all <a href="https://aws.amazon.com/about-aws/global-infrastructure/" target="_blank" rel="noopener">AWS Regions</a>. For the latest supported Regions, see <a href="https://docs.aws.amazon.com/general/latest/gr/asm.html">AWS Secrets Manager endpoints and quotas</a>.</p>
+<p>For any Quick Start to work in a Region other than its default Region, all the services it deploys must be supported in that Region. You can launch a Quick Start in any Region and see if it works. If you get an error such as “Unrecognized resource type,” the Quick Start is not supported in that Region.</p>
 </div>
 <div class="paragraph">
-<p>This deployment also uses Amazon FSx, which is available in the following Regions:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>US East (N. Virginia)</p>
-</li>
-<li>
-<p>US East (Ohio)</p>
-</li>
-<li>
-<p>US West (Oregon)</p>
-</li>
-<li>
-<p>Europe (Ireland)</p>
-</li>
-<li>
-<p>Europe (London)</p>
-</li>
-<li>
-<p>Asia Pacific (Tokyo)</p>
-</li>
-<li>
-<p>Asia Pacific (Singapore)</p>
-</li>
-<li>
-<p>Asia Pacific (Sydney)</p>
-</li>
-<li>
-<p>Europe (Stockholm)</p>
-</li>
-</ul>
+<p>For an up-to-date list of AWS Regions and the AWS services they support, see <a href="https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/" target="_blank" rel="noopener">AWS Regional Services</a>.</p>
 </div>
 <div class="admonitionblock tip">
 <table>
@@ -1296,9 +1266,9 @@ Certain Regions are available on an opt-in basis. For more information, see <a h
 </div>
 </div>
 <div class="sect3">
-<h4 id="_ec2_key_pairs">EC2 key pairs</h4>
+<h4 id="_amazon_ec2_key_pairs">Amazon EC2 key pairs</h4>
 <div class="paragraph">
-<p>Make sure that at least one <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html" target="_blank" rel="noopener">Amazon EC2 key pair</a> exists in your AWS account in the Region where you plan to deploy the Quick Start. Make note of the key pair name. You need it during deployment. To create a key pair, see <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html" target="_blank" rel="noopener">Amazon EC2 key pairs and Linux instances</a>.</p>
+<p>Ensure that at least one Amazon EC2 key pair exists in your AWS account in the Region where you plan to deploy the Quick Start. Note the key-pair name because you will use it during deployment. To create a key pair, see <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html" target="_blank" rel="noopener">Amazon EC2 key pairs and Linux instances</a>.</p>
 </div>
 <div class="paragraph">
 <p>For testing or proof-of-concept purposes, we recommend creating a new key pair instead of using one that’s already being used by a production instance.</p>
@@ -1308,28 +1278,6 @@ Certain Regions are available on an opt-in basis. For more information, see <a h
 <h4 id="_iam_permissions">IAM permissions</h4>
 <div class="paragraph">
 <p>Before launching the Quick Start, you must sign in to the AWS Management Console with IAM permissions for the resources that the templates deploy. The <em>AdministratorAccess</em> managed policy within IAM provides sufficient permissions, although your organization may choose to use a custom policy with more restrictions. For more information, see <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_job-functions.html" target="_blank" rel="noopener">AWS managed policies for job functions</a>.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_prepare_for_the_deployment">Prepare for the deployment</h4>
-<div class="paragraph">
-<p>The deployment of this Quick Start requires a copy of the Microsoft SQL Server 2019 installation media as an .iso file. The typical file name is <strong>SQLServer2019-x64-ENU.iso</strong>.</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Download the <a href="https://www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019" target="_blank" rel="noopener">SQL Server 2019 evaluation edition</a> from the Microsoft Evaluation Center.</p>
-<div class="paragraph">
-<p>—or—</p>
-</div>
-<div class="paragraph">
-<p>Obtain the .iso file from the Microsoft Developer Network if you have an MSDN account with licenses for server software.</p>
-</div>
-</li>
-<li>
-<p>Upload the .iso file to an S3 bucket.</p>
-</li>
-</ol>
 </div>
 </div>
 <div class="sect3">
@@ -1352,6 +1300,28 @@ Certain Regions are available on an opt-in basis. For more information, see <a h
 </div>
 <div class="paragraph">
 <p>The Quick Start provides separate templates for these options. It also lets you configure Classless Inter-Domain Routing (CIDR) blocks, instance types, and other settings, as discussed later in this guide.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_prepare_for_the_deployment">Prepare for the deployment</h4>
+<div class="paragraph">
+<p>The deployment of this Quick Start requires a copy of the Microsoft SQL Server 2019 installation media as an .iso file. The typical file name is <strong>SQLServer2019-x64-ENU.iso</strong>.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Download the <a href="https://www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019" target="_blank" rel="noopener">SQL Server 2019 evaluation edition</a> from the Microsoft Evaluation Center.</p>
+<div class="paragraph">
+<p>—or—</p>
+</div>
+<div class="paragraph">
+<p>Obtain the .iso file from the Microsoft Developer Network if you have an MSDN account with licenses for server software.</p>
+</div>
+</li>
+<li>
+<p>Upload the .iso file to an S3 bucket.</p>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -1425,7 +1395,7 @@ If you&#8217;re deploying this Quick Start into an existing VPC, make sure that 
 <p>On the <strong>Specify stack details</strong> page, change the stack name if needed. Review the parameters for the template. Provide values for the parameters that require input. For all other parameters, review the default settings and customize them as necessary. For details on each parameter, see the <a href="#_parameter_reference">Parameter reference</a> section of this guide. When you finish reviewing and customizing the parameters, choose <strong>Next</strong>.</p>
 </li>
 <li>
-<p>On the <strong>Configure stack options</strong> page, you can <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html" target="_blank" rel="noopener">specify tags</a> (key-value pairs) for resources in your stack and <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html" target="_blank" rel="noopener">set advanced options</a>. When you’re finished, choose <strong>Next</strong>.</p>
+<p>On the <strong>Configure stack options</strong> page, you can <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html" target="_blank" rel="noopener">specify tags</a> (key-value pairs) for resources in your stack and <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html" target="_blank" rel="noopener">set advanced options</a>. When you finish, choose <strong>Next</strong>.</p>
 </li>
 <li>
 <p>On the <strong>Review</strong> page, review and confirm the template settings. Under <strong>Capabilities</strong>, select the two check boxes to acknowledge that the template creates IAM resources and might require the ability to automatically expand macros.</p>
@@ -1668,6 +1638,14 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <p><a href="https://aws.amazon.com/quickstart/architecture/rd-gateway/" target="_blank" rel="noopener">Remote Desktop Gateway on AWS</a></p>
 </li>
 </ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_customer_responsibility">Customer responsibility</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After you successfully deploy this Quick Start, confirm that your resources and services are updated and configured — including any required patches — to meet your security and other needs. For more information, see the <a href="https://aws.amazon.com/compliance/shared-responsibility-model/" target="_blank" rel="noopener">AWS Shared Responsibility Model</a>.</p>
 </div>
 </div>
 </div>
@@ -2000,7 +1978,42 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 8. AWS Quick Start configuration</caption>
+<caption class="title">Table 8. Application Insights configuration</caption>
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 11%;">
+<col style="width: 73%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter label (name)</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable Application Insights
+(<code>EnableAppInsights</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>false</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Select whether to enable Application Insights</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Insights application name
+(<code>ApplicationName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>MSSQL</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Insights application name</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Resource Group name
+(<code>ResourceGroupName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SQL</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Resource Group name</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 9. AWS Quick Start configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2038,7 +2051,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 <div class="sect2">
 <h3 id="_parameters_for_deploying_into_an_existing_vpc_with_aws_managed_microsoft_ad">Parameters for deploying into an existing VPC with AWS Managed Microsoft AD</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 9. Network configuration</caption>
+<caption class="title">Table 10. Network configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2079,7 +2092,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 10. Microsoft Active Directory configuration</caption>
+<caption class="title">Table 11. Microsoft Active Directory configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2138,7 +2151,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 11. Amazon EC2 configuration</caption>
+<caption class="title">Table 12. Amazon EC2 configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2185,7 +2198,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 12. Amazon FSx Windows file-share configuration</caption>
+<caption class="title">Table 13. Amazon FSx Windows file-share configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2214,7 +2227,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 13. Microsoft SQL Server FCI configurations</caption>
+<caption class="title">Table 14. Microsoft SQL Server FCI configurations</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2261,7 +2274,42 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 14. AWS Quick Start configuration</caption>
+<caption class="title">Table 15. Application Insights configuration</caption>
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 11%;">
+<col style="width: 73%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter label (name)</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable Application Insights
+(<code>EnableAppInsights</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>false</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Select whether to enable Application Insights</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Insights application name
+(<code>ApplicationName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>MSSQLFCI</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Insights application name</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Resource Group name
+(<code>ResourceGroupName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SQL</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Resource Group name</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 16. AWS Quick Start configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2299,7 +2347,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 <div class="sect2">
 <h3 id="_parameters_for_deploying_into_an_existing_vpc_with_self_managed_active_directory">Parameters for deploying into an existing VPC with self-managed Active Directory</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 15. Network configuration</caption>
+<caption class="title">Table 17. Network configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2340,7 +2388,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 16. Microsoft Active Directory configuration</caption>
+<caption class="title">Table 18. Microsoft Active Directory configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2393,7 +2441,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 17. Amazon EC2 configuration</caption>
+<caption class="title">Table 19. Amazon EC2 configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2440,7 +2488,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 18. Amazon FSx Windows file-share configuration</caption>
+<caption class="title">Table 20. Amazon FSx Windows file-share configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2469,7 +2517,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 19. Microsoft SQL Server FCI configurations</caption>
+<caption class="title">Table 21. Microsoft SQL Server FCI configurations</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2516,7 +2564,42 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 20. AWS Quick Start configuration</caption>
+<caption class="title">Table 22. Application Insights configuration</caption>
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 11%;">
+<col style="width: 73%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter label (name)</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enable Application Insights
+(<code>EnableAppInsights</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>false</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Select whether to enable Application Insights</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Insights application name
+(<code>ApplicationName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>MSSQL</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Insights application name</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Resource Group name
+(<code>ResourceGroupName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>SQL</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Application Resource Group name</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 23. AWS Quick Start configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -2565,7 +2648,7 @@ Unless you are customizing the Quick Start templates for your own deployment pro
 <h2 id="_quick_start_reference_deployments">Quick Start reference deployments</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>See the <a href="https://aws.amazon.com/quickstart/">AWS Quick Start home page</a>.</p>
+<p>See the <a href="https://aws.amazon.com/quickstart/" target="_blank" rel="noopener">AWS Quick Start home page</a>.</p>
 </div>
 </div>
 </div>
@@ -2594,18 +2677,18 @@ and to share your customizations with others.</p>
 </div>
 <p class="footer-text">
 <!-- We can use document attributes: -->
-<!-- Generated with Asciidoctor v2.0.15. -->
+<!-- Generated with Asciidoctor v2.0.16. -->
 <a href="https://aws.amazon.com/privacy/">Privacy</a> | <a href="https://aws.amazon.com/terms/">Site terms</a> | &copy; 2021, Amazon Web Services, Inc. or its affiliates. All rights reserved.
 </p>
 </body>
 </html>
 <!--
 repo commit:
-e834615a7e8bb571a0109d08c14611ab25e67dd2
+9d2d385bfbea777d7fd2c099dcc12aa568a01129
 
 submodule config:
-+4b31f09b105a1aa1ea6e421e0e33b647196f4c69 docs/boilerplate (heads/main)
- c89deff157bdf59bb159878ebdaea53ae6753759 submodules/quickstart-aws-vpc (v1.0-41-gc89deff)
- 3707735789044f7121b4904eff062bfae3477b62 submodules/quickstart-microsoft-activedirectory (remotes/origin/master)
- e4d098d825db51a56429891d08ba9417dd958a22 submodules/quickstart-microsoft-rdgateway (remotes/origin/master)
+ eea042d0b9c005d2549a71349e5f28b02c81af75 docs/boilerplate (heads/main)
+ b7aefd089e944d77cdc2b083886cdc498d2a6ee4 submodules/quickstart-aws-vpc (v1.0-59-gb7aefd0)
+ 6067c2d6153bd91468f8a3637373ba73122ab79f submodules/quickstart-microsoft-activedirectory (heads/main)
+ 06d1fe3a37b9a90f223d18b429cee6699d00ec59 submodules/quickstart-microsoft-rdgateway (heads/main)
 -->

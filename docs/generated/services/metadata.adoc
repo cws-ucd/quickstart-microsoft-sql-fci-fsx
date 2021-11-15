@@ -1,4 +1,6 @@
 
+:template_applicationinsights:
+:template_aws_applicationinsights_application:
 :template_aws_cloudformation_stack:
 :template_aws_cloudformation_waitcondition:
 :template_aws_cloudformation_waitconditionhandle:
@@ -10,6 +12,7 @@
 :template_aws_iam_role:
 :template_aws_lambda_function:
 :template_aws_logs_loggroup:
+:template_aws_resourcegroups_group:
 :template_aws_secretsmanager_secret:
 :template_aws_ssm_document:
 :template_cloudformation:
@@ -20,6 +23,7 @@
 :template_iam:
 :template_lambda:
 :template_logs:
+:template_resourcegroups:
 :template_secretsmanager:
 :template_ssm:
 :template_windowsbaseamiinfo:

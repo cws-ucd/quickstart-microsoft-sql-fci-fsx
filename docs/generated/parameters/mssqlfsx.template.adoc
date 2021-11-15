@@ -46,6 +46,14 @@
 (`SqlFSxFCIName`)|`SqlFCI`|Name of the failover cluster instance (FCI). You can use up to 15 characters.|SQL administrator account or accounts
 (`SQLAdminAccounts`)|`contoso\Administrator`|Comma-separated user names are used as MSSQL DB administrators. It could be Active Directory domain administrators or other local or domain users.
 |===
+.Application Insights configuration
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Enable Application Insights
+(`EnableAppInsights`)|`false`|Select whether to enable Application Insights|Application Insights application name
+(`ApplicationName`)|`MSSQL`|Application Insights application name|Resource Group name
+(`ResourceGroupName`)|`SQL`|Application Resource Group name
+|===
 .AWS Quick Start configuration
 [width="100%",cols="16%,11%,73%",options="header",]
 |===
